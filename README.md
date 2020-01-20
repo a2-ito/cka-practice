@@ -1,3 +1,4 @@
+
 # CKA/CKAD Practice
 
 ## Exam curriculum - 01/2020
@@ -27,15 +28,18 @@
 ```
 
 ## Task Summary
+
 - [Task. Backup and restore etcd data](#Task-Backup-and-restore-etcd-data)
 - [Task. Update cluster](#Task-Update-cluster)
 - [Task. Re-create certificates from CA certificate](#Task-Re-create-certificates-from-CA-certificate)
 - [Task. Rolling updates and rollbacks](#Task-Rolling-updates-and-rollbacks)
-- [Task. Expose pod](#Task-Expose-pod)
-- [Task. expose](#Task-expose)
+- [Task. Expose pod without yaml](#Task-Expose-pod-without-yaml)
+- [Task. Create hostPath Persistent Volume](Task.-Create-hostPath-Persistent-Volume)
 - [Task. Deploy sidecar pod](#Task-Deploy-sidecar-pod)
+- [Task. Name Resolution for Pod and Service](#Task-Name-Resolution-for-Pod-and-Service)
 - [Task. Create a configmap named config with values](#Task-Create-a-configmap-named-config-with-values])
 - [Task. Create initContainer](#Task-Create-initContainer)
+- [Task. Create Cronjob](#Task-Create-Cronjob)
 - [Task. Create a configmap named config with values](#Task-Create-a-configmap-named-config-with-values)
 - [Task. Create an nginx pod with requests and limits](#Task-Create-an-nginx-pod-with-requests-and-limits)
 - [Task. Create an nginx deployment with NetworkPolicy](#Task-Create-an-nginx-deployment-with-NetworkPolicy)
@@ -117,6 +121,26 @@ kubectl drain worker1
 
 ```
 kubectl uncordon wokrer1
+```
+
+</details>
+
+## Task. Expose pod without yaml
+- pod - ```name```: ```nginx-pod```, image: ```nginx```
+- service - ```name```: ```nginx-svc```, ```type```: ```ClusterIP```
+
+<details>
+
+```
+kubectl run nginx-pod --restart=Never --image=nginx
+```
+
+```
+kubectl expose pod nginx-pod --name nginx-svc --target-port=80 --port=80 --type=ClusterIP
+```
+
+```
+curl http://[ClusterIP]:80
 ```
 
 </details>
@@ -559,30 +583,114 @@ EOF
 ```
 </details>
 
-## Task. Create a new ```ResourceQuota``` which limits 1 CPU and 512 MB RAM
+## Task. Create a new ```ResourceQuota```
+- ```name```: ```rq-test```
+- This limits 1 CPU and 512 MB RAM
+
+<details>
+
+```
+kubectl create namespace rq-test-namespace
+```
+```
+cat <<EOF | kubectl apply -f - 
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: pods-high
+  namespace: rq-test-namespace
+spec:
+  hard:
+    cpu: "1000"
+    memory: 512Mi
+    pods: "10"
+  scopeSelector:
+    matchExpressions:
+    - operator : In
+      scopeName: PriorityClass
+      values: ["high"]
+EOF
+```
+
+</details>
 
 ## Task. Name Resolution for Pod and Service
 ### Create sample Pod and Service
+
 <details>
 
 ```
+kubectl run nginx-dns --image=nginx --restart=Never
+kubectl expose pod nginx-dns --name nginx-dns --type=ClusterIP --target-port=80 --port=80
 ```
+
 </details>
 
-## Task. Create nginx pod with environment value ```VAL=val1```
+### Create dnsutil pod
 <details>
 
 ```
-echo 
+cat << EOF | kubectl apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  name: dnsutils
+  namespace: default
+spec:
+  containers:
+  - name: dnsutils
+    image: gcr.io/kubernetes-e2e-test-images/dnsutils:1.3
+    command:
+      - sleep
+      - "3600"
+    imagePullPolicy: IfNotPresent
+  restartPolicy: Always
+EOF
+```
+
+</details>
+
+### nslookup
+
+<details>
+
+```
+kubectl exec -it dnsutils -- nslookup kubernetes 
+
+kubectl exec -it dnsutils -- nslookup [IP]
+
+kubectl exec -it dnsutils -- nslookup 10-42-0-32.nginx-dns.default.svc.cluster.local.
+kubectl exec -it dnsutils -- nslookup nginx-dns
+```
+
+</details>
+
+## Task. Create nginx pod with environment value
+- ```name```: ```nginx-with-env1```
+- envirionment value: ```VAL=val1```
+
+<details>
+
+```
+kubectl run nginx-with-env --restart=Never --env=VAL=val1 --image=nginx
 ```
 </details>
 
 ## Task. Create Cronjob
+- ```name```: ```testconjob```
+- ```image```: ```busybox```
+- cmd: ```echo "Hello World!"```
+- Run every ```3``` mins
+
 <details>
 
 ```
-echo 
+kubectl run testcronjob --image=busybox --restart=OnFailure --schedule="*/3 * * * *" -- sh -c 'echo Hellow World!'
 ```
+```
+kubectl exec -it nginx-with-env -- env
+```
+
 </details>
 
 ## Task. Create pod with ```livenessProbe``` and ```readinessProbe```
@@ -620,19 +728,33 @@ EOF
 <details>
 
 ```
+
 ```
 </details>
 
 ## Task. Create a configmap named config with values
-- ```foo=foofoo```
-- ```bar=barbar```
+- ```name```: ```testconfig``` 
+- value 1 - ```foo=foofoo```
+- value 2 - ```bar=barbar```
+
 <details>
 
 ```
+cat <<EOF | kubectl create -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: testconfig
+data:
+  foo: foofoo
+  bar: barbar
+EOF
 ```
+
 </details>
 
 ## Task. Create an nginx pod with requests and limits
+- ```name```: ```testpod``` 
 - requests cpu=100m,memory=256Mi
 - limits cpu=200m,memory=512Mi
 
@@ -643,35 +765,43 @@ cat <<EOF | kubectl create -f -
 apiVersion: v1
 kind: Pod
 metadata:
-  name: busybox1
+  name: testpod
 spec:
   containers:
-  - name: busybox-cnt01
+  - name: testpod
     image: busybox
     command: ["/bin/sh"]
     args: ["-c", "while true; do echo hello from cnt01; sleep 10;done"]
     resources:
       requests:
-        cpu: "0.5"
+        cpu: "100m"
+        memory: "256Mi"
       limits:
-        cpu: "2"
-        memory: "100Mi"
+        cpu: "200m"
+        memory: "512Mi"
 EOF
 ```
+
 </details>
 
-## Create an nginx deployment with NetworkPolicy
+## Task. Create an nginx deployment with NetworkPolicy
+- ```name```: ```testpod``` 
 - 2 replicas
-- expose it via a ClusterIP service on port 80. Create a NetworkPolicy so that only pods with labels 'access: true' can access the deployment and apply it
+- Expose it via a ClusterIP service on port 80.
+- Create a NetworkPolicy so that only pods with labels ```access: true``` can access the deployment
+
 <details>
 
 ```
 ```
+
 </details>
 
 ## Task. Create initContainer
+- ```name```: ```init-container```
 - main container: ```name=nginx-container```, ```image=nginx```
 - init container: ```name=init-container```, ```image=busybox```
+
 <details>
 
 ```
@@ -708,9 +838,13 @@ EOF
 
 ## Task. Create a horizontal autoscaling group
 Create a horizontal autoscaling group that should start with 2 pods and scale when CPU usage is over 50%.
+- ```name```: ```test-autosclae```
+
 <details>
 
 ```
+
 ```
+
 </details>
 
