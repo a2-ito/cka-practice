@@ -28,17 +28,22 @@
 
 ## Task Summary
 - [Task. Backup and restore etcd data](#Task-Backup-and-restore-etcd-data)
-- [Task. Update cluster](#Task-Update-cluster)
 - [Task. Re-create certificates from CA certificate](#Task-Re-create-certificates-from-CA-certificate)
+- [Task. Update cluster](#Task-Update-cluster)
 - [Task. Rolling updates and rollbacks](#Task-Rolling-updates-and-rollbacks)
-- [Task. Expose pod](#Task-Expose-pod)
-- [Task. expose](#Task-expose)
+- [Task. Create hostPath Persistent Volume](#Task.-Create-hostPath-Persistent-Volume)
+- [Task. Create StorageClass,PersistentVolume,PersistentVolumeClaim via local](Task.-Create-StorageClass,PersistentVolume,PersistentVolumeClaim-via-local)
+- [Task. Expose Pod via Service](#Task-Expose-Pod-via-Service)
 - [Task. Deploy sidecar pod](#Task-Deploy-sidecar-pod)
-- [Task. Create a configmap named config with values](#Task-Create-a-configmap-named-config-with-values])
-- [Task. Create initContainer](#Task-Create-initContainer)
+- [Task. Create a new ResourceQuota](#Task-Create-a-new-ResourceQuota)
+- [Task. Name Resolution for Pod and Service](#Task-Name-Resolution-for-Pod-and-Service)
+- [Task. Create nginx pod with environment value](#Task-Create-nginx-pod-with-environment-value)
+- [Task. Create Cronjob](#Task-Create-Cronjob)
+- [Task. Create pod with livenessProbe and readinessProbe](#Task-Create-pod-with-livenessProbe-and-readinessProbe)
 - [Task. Create a configmap named config with values](#Task-Create-a-configmap-named-config-with-values)
 - [Task. Create an nginx pod with requests and limits](#Task-Create-an-nginx-pod-with-requests-and-limits)
 - [Task. Create an nginx deployment with NetworkPolicy](#Task-Create-an-nginx-deployment-with-NetworkPolicy)
+- [Task. Create initContainer](#Task-Create-initContainer)
 - [Task. Create a horizontal autoscaling group](#Task-Create-a-horizontal-autoscaling-group)
 
 ## Task. Backup and restore etcd data
@@ -100,6 +105,7 @@ sudo systemctl start kube-apiserver
 ```
 </details>
 
+&nbsp;
 ## Task. Update cluster
 ### drain worker nodes for maintainance
 <details>
@@ -121,7 +127,50 @@ kubectl uncordon wokrer1
 
 </details>
 
-## Task. Create ```hostPath``` Persistent Volume
+&nbsp;
+## Task. Re-create certificates from CA certificate
+
+<details>
+
+```
+```
+</details>
+
+&nbsp;
+## Task. Rolling updates and rollbacks
+
+### Deploy nginx deployment
+<details>
+
+```
+kubectl run nginx --restart=Always --image=nginx:1.12
+```
+</details>
+
+### Update image
+<details>
+```
+kubectl set image deployment nginx nignx=nginx:1.13
+```
+</details>
+
+### Rollback
+<details>
+
+```
+kubectl rollout history deployment nginx
+kubectl get deployment nginx -o yaml | grep image
+```
+
+```
+kubectl rollout undo deployment nginx
+kubectl get deployment nginx -o yaml | grep image
+```
+</details>
+
+&nbsp;
+## Task. Create hostPath Persistent Volume
+
 ### Create hostfile at ```/tmp/data/hostfile```
 
 <details>
@@ -172,7 +221,8 @@ kubectl delete pod testpod
 ```
 </details>
 
-## Task. Create StorageClass/PersistentVolume/PersistentVolumeClaim via local
+&nbsp;
+## Task. Create StorageClass,PersistentVolume,PersistentVolumeClaim via local
 ### Create StorageClass ```local-storage```
 <details>
 
@@ -220,8 +270,12 @@ spec:
           - cka-node1
 EOF
 ```
+</details>
 
-### Create PVC
+
+### Create PVC ```pvc-local-storage```
+<details>
+
 ```
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
@@ -237,8 +291,11 @@ spec:
       storage: 1Gi
 EOF
 ```
+</details>
 
 ### Create Pod
+<details>
+
 ```
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
@@ -261,16 +318,21 @@ spec:
       claimName: pvc-local-storage
 EOF
 ```
+</details>
+
+&nbsp;
 
 ## Task. Re-create certificates from CA certificate
 
 | Type               | CN                             | O                         |
-|:------------------:|:------------------------------:|:-------------------------:|
+|:-------------------|:-------------------------------|:--------------------------|
 | Kube Proxy         | system:kube-proxy              | system:node-proxier       |
 | Kubelet            | system:node:[instance]         | system:nodes              | 
 | API Server         | kubernetes                     | Kubernetes                |
 | Controller Manager | system:kube-controller-manager | system:controller-manager |
 | Scheduler          | system:kube-scheduler          | system:kube-scheduler     |
+
+<details>
 
 ```
 cfssl gencert \
@@ -280,52 +342,48 @@ cfssl gencert \
   -profile=kubernetes \
   admin-csr.json | cfssljson -bare admin
 ```
+</details>
 
-## Task. Rolling updates and rollbacks
-### Deploy nginx deployment
-```
-kubectl run nginx --restart=Always --image=nginx:1.12
-```
-
-### Update image
-```
-kubectl set image deployment nginx nignx=nginx:1.13
-```
-
-### Rollback
-```
-kubectl rollout history deployment nginx
-kubectl get deployment nginx -o yaml | grep image
-```
-```
-kubectl rollout undo deployment nginx
-kubectl get deployment nginx -o yaml | grep image
-```
-
-## Task. Expose pod
+&nbsp;
+## Task. Expose Pod via Service
 ### Deploye nginx deployment
+<details>
+
 ```
 kubectl run nginx --restart=Always --image=nginx
 ```
+</details>
 
 ### Expose svc via ClusterIP
+<details>
+
 ```
 kubectl expose deployment nginx --port=8080 --target-port=80
 ```
+</details>
 
 ### Expose svc via NodePort
+<details>
+
 ```
 kubectl expose deployment nginx --name nginx-nodeport --port=8081 --target-port=80 --type=NodePort 
 ```
+</details>
 
 ### Expose pod via ExternalIP (ClusterIP)
+<details>
+
 ```
 kubectl expose deployment nginx --name nginx-externalip --port=8082 --target-port=80 --type=ClusterIP --external-ip=10.0.2.15
 ```
+</details>
 
+&nbsp;
 ## Task. Deploy sidecar pod
-- name: ```container1```, image=```busybox```
-- name: ```container2```, image=```busybox``` 
+- main-container - name: ```container1```, image=```busybox```
+- sidecar - name: ```container2```, image=```busybox``` 
+
+<details>
 
 ```
 cat <<EOF | kubectl apply -f -
@@ -355,8 +413,12 @@ spec:
     args: ["-c", "echo Hello from the debian container > /pod-data/index.html"]
 EOF
 ```
+</details>
 
+&nbsp;
 ## Task. Deploy pod with nodeSelector
+<details>
+
 ```
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
@@ -376,217 +438,193 @@ EOF
 ```
 </details>
 
+&nbsp;
 ## Task. Deploy pod with podAffinity/podAntiAffinity
-### podAffinity
+- ```podAffinity```: pod-b always runs always with pod-a
+- ```podAntiAffinity```: pod-a alwways doesn't run with pod-b
+
+### ```podAffinity```: pod-b always runs always with pod-a
 <details>
 
 ```
-cat <<EOF | kubectl apply -f -
+kubectl run pod-a --image=busybox --labels="app=pod-a" --restart=Never -- sleep 3600
+```
+```
+cat <<EOF | kubectl apply -f - 
 apiVersion: v1
 kind: Pod
 metadata:
-  name: with-pod-affinity
+  name: pod-b
 spec:
   affinity:
     podAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:
       - labelSelector:
           matchExpressions:
-          - key: security
+          - key: app
             operator: In
             values:
-            - S1
-          topologyKey: kubernetes.io/hostname
+              - pod-a
+        topologyKey: kubernetes.io/hostname
   containers:
-  - name: with-pod-affinity
-    image: k8s.gcr.io/pause:2.0
-EOF
-```
-
-
-```
-cat <<EOF | kubectl apply -f -
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: redis-cache
-spec:
-  selector:
-    matchLabels:
-      app: store
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: store
-    spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - store
-            topologyKey: "kubernetes.io/hostname"
-      containers:
-      - name: redis-server
-        image: redis:3.2-alpine
+    - name: pod-b
+      image: busybox
 EOF
 ```
 </details>
 
-### podAntiAffinity
+### ```podAntiAffinity```: pod-a alwways doesn't run with pod-b
 <details>
 
 ```
-cat <<EOF | kubectl apply -f -
-apiVersion: apps/v1
-kind: Deployment
+kubectl run pod-a --image=busybox --labels="app=pod-a" --restart=Never -- sleep 3600
+```
+
+```
+cat <<EOF | kubectl apply -f - 
+apiVersion: v1
+kind: Pod
 metadata:
-  name: web-server
+  name: pod-b
 spec:
-  selector:
-    matchLabels:
-      app: web-store
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: web-store
-    spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - web-store
-            topologyKey: "kubernetes.io/hostname"
-      containers:
-      - name: web-app
-        image: nginx:1.12-alpine
+  affinity:
+    podAntiAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchExpressions:
+          - key: app
+            operator: In
+            values:
+              - pod-a
+        topologyKey: kubernetes.io/hostname
+  containers:
+    - name: pod-b
+      image: busybox
 EOF
 ```
+</details>
+
+&nbsp;
+## Task. Create a new ResourceQuota
+- ```name```: ```test-resourcequota```
+- limits 1 CPU and 512 MB RAM
+
+<details>
+
 ```
-cat <<EOF | kubectl apply -f -
-apiVersion: apps/v1
-kind: Deployment
+cat <<EOF | kubectl apply -f - 
+apiVersion: v1
+kind: ResourceQuota
 metadata:
-  name: with-pod-antiaffinity
+  name: test-resourcequota
 spec:
-  selector:
-    matchLabels:
-      app: web-store
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: web-store
-    spec:
-      affinity:
-        podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - web-store
-            topologyKey: "kubernetes.io/hostname"
-      containers:
-      - name: web-app
-        image: nginx:1.12-alpine
+  hard:
+    cpu: "1"
+    memory: 512Mi
+    pods: "10"
+  scopeSelector:
+    matchExpressions:
+    - operator : In
+      scopeName: PriorityClass
+      values: ["low"]
 EOF
 ```
+</details>
+
+### Create pod with resourcequota
+
+<details>
+
 ```
-cat <<EOF | kubectl apply -f -
-apiVersion: apps/v1
-kind: Deployment
+cat <<EOF | kubectl apply -f - 
+apiVersion: v1
+kind: Pod
 metadata:
-  name: with-pod-affinity
+  name: low-pod
 spec:
-  selector:
-    matchLabels:
-      app: web-store
-  replicas: 1
-  template:
-    metadata:
-      labels:
-        app: web-store
-    spec:
-      affinity:
-        podAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - web-store
-            topologyKey: "kubernetes.io/hostname"
-      containers:
-      - name: web-app
-        image: nginx:1.12-alpine
+  containers:
+  - name: low-priority
+    image: busybox
+    command: ["/bin/sh"]
+    args: ["-c", "while true; do echo hello; sleep 10;done"]
+  priorityClassName: low
 EOF
 ```
+</details>
+
+&nbsp;
+## Task. Name Resolution for Pod and Service
+### Create sample Pod and Service
+<details>
+
+
+```
+kubectl run nginx --image=nginx --restart=Never --labels="name=nginx"
+kubectl expose deployment nginx --port=8080 --target-port=80 --type="ClusterIP"
+```
+</details>
+
+### Resolve IP from Name 
+<details>
+
+```
+kubectl exec -it dnsutils -- nslookup nginx.default.svc.cluster.local
+kubectl exec -it dnsutils -- nslookup 10-42-0-128.nginx.default.svc.cluster.local
+```
+</details>
+
+### Create pod with specific domain
+- ```busybox-1.default-subdomain.default.svc.cluster.local```
+
+<details>
+
 ```
 cat <<EOF | kubectl apply -f -
 apiVersion: v1
 kind: Pod
 metadata:
-  name: with-pod-antiaffinity
+  name: busybox1
+  labels:
+    name: busybox
 spec:
-  affinity:
-    podAntiAffinity:
-      preferredDuringSchedulingIgnoredDuringExecution:
-      - weight: 1
-        podAffinityTerm:
-          labelSelector:
-            matchExpressions:
-            - key: app
-              operator: In
-              values:
-              - web-store
-          topologyKey: kubernetes.io/hostname
+  hostname: busybox-1
+  subdomain: default-subdomain
   containers:
-  - name: with-pod-antiaffinity
-    image: k8s.gcr.io/pause:2.0
+  - image: busybox:1.28
+    command:
+      - sleep
+      - "3600"
+    name: busybox
 EOF
 ```
+```
+kubectl exec -it dnsutils -- nslookup busybox-1.default-subdomain.default.svc.cluster.local.
+```
 </details>
 
-## Task. Create a new ```ResourceQuota``` which limits 1 CPU and 512 MB RAM
+&nbsp;
+## Task. Create nginx pod with environment value
+- ```VAL```=```val1```
 
-## Task. Name Resolution for Pod and Service
-### Create sample Pod and Service
 <details>
 
 ```
+kubectl run nginx --image=nginx --restart=Never --env="VAL1=val1"
 ```
 </details>
 
-## Task. Create nginx pod with environment value ```VAL=val1```
-<details>
-
-```
-echo 
-```
-</details>
-
+&nbsp;
 ## Task. Create Cronjob
 <details>
 
 ```
-echo 
+kubectl run testcronjob --image=busybox --restart=OnFailure --schedule="*/1 * * * *" -- echo "Hello World!"
 ```
 </details>
 
-## Task. Create pod with ```livenessProbe``` and ```readinessProbe```
-### livenessProbe
+&nbsp;
+## Task. Create pod with livenessProbe and readinessProbe
+### Create pod with livenessProbe
 <details>
 
 ```
@@ -616,25 +654,88 @@ EOF
 ```
 </details>
 
-### readinessProbe
+### Create pod with readinessProbe
 <details>
 
 ```
+cat <<EOF | kubectl apply -f - 
+apiVersion: v1
+kind: Pod
+metadata:
+  labels:
+    test: readiness
+  name: readiness-exec
+spec:
+  containers:
+  - name: readiness
+    image: k8s.gcr.io/busybox
+    args:
+    - /bin/sh
+    - -c
+    - touch /tmp/healthy; sleep 30; rm -rf /tmp/healthy; sleep 600
+    readinessProbe:
+      exec:
+        command:
+        - cat
+        - /tmp/healthy
+      initialDelaySeconds: 5
+      periodSeconds: 5
+EOF
 ```
 </details>
 
+&nbsp;
 ## Task. Create a configmap named config with values
 - ```foo=foofoo```
 - ```bar=barbar```
+
+### via command line
 <details>
 
 ```
+kubectl create configmap configmap1--from-literal="foo=foofoo" --from-literal="bar=barbar"
 ```
 </details>
 
+### via file
+<details>
+
+```
+echo "foo=foofoo\nbar=barbar" > config.txt
+kubectl create configmap configmap2 --from-file="config.txt"
+```
+</details>
+
+### via file
+<details>
+
+```
+kubectl create configmap configmap3 --from-file="special=config.txt"
+```
+</details>
+
+### via yaml
+<details>
+
+```
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: testconfimap
+  namespace: default
+data:
+  foo: fofoo
+  bar: barbar
+EOF
+```
+</details>
+
+
+&nbsp;
 ## Task. Create an nginx pod with requests and limits
-- requests cpu=100m,memory=256Mi
-- limits cpu=200m,memory=512Mi
+- ```requests```: cpu=100m,memory=256Mi
+- ```limits```: cpu=200m,memory=512Mi
 
 <details>
 
@@ -660,18 +761,55 @@ EOF
 ```
 </details>
 
-## Create an nginx deployment with NetworkPolicy
+&nbsp;
+## Task. Create an nginx deployment with NetworkPolicy
 - 2 replicas
-- expose it via a ClusterIP service on port 80. Create a NetworkPolicy so that only pods with labels 'access: true' can access the deployment and apply it
+- expose it via a ClusterIP service on port 80.
+- Create a NetworkPolicy so that only pods with labels ```access: true``` can access the deployment and apply it
+
 <details>
 
 ```
+cat <<EOF | kubectl apply -f - 
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: test-network-policy
+  namespace: default
+spec:
+  podSelector:
+    matchLabels:
+      role: limitedpod
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          access: "true"
+    ports:
+    - protocol: TCP
+      port: 80
+EOF
 ```
+
+```
+kubectl run nginx --restart=Never --labels="role=limited" --image=nginx
+```
+```
+curl http://[IP]
+kubectl run busybox --restart=Never --image=busybox --labels="access=true" -- curl http://[IP]/
+kubectl run busybox --restart=Never --image=busybox --labels="access=false" --rm -- curl http://[IP]/
+kubectl run --image=giantswarm/tiny-tools --restart=Never --rm -i tepod -- curl 10.42.0.3
+```
+
 </details>
 
+&nbsp;
 ## Task. Create initContainer
 - main container: ```name=nginx-container```, ```image=nginx```
 - init container: ```name=init-container```, ```image=busybox```
+
 <details>
 
 ```
@@ -706,11 +844,92 @@ EOF
 ```
 </details>
 
+&nbsp;
 ## Task. Create a horizontal autoscaling group
 Create a horizontal autoscaling group that should start with 2 pods and scale when CPU usage is over 50%.
+
+### Create deployment ```nginx```
 <details>
 
 ```
+kubectl run nginx --image=nginx --replicas=1
 ```
 </details>
+
+### Create autoscale
+<details>
+
+```
+kubectl autoscale deployment nginx --cpu-percent=50 --min=2 --max=10
+```
+</details>
+
+## Task. Create secret
+### Create a secret called mysecret with the values password=mypass
+<details>
+
+```
+kubectl create secret generic mysecret --from-literal=password=mypass
+```
+</details>
+
+### Create a secret called mysecret2 that gets key/value from a file
+
+<details>
+
+```
+kubectl create secret generic mysecret-from-file --from-file=pass.txt
+```
+</details>
+
+## Task. Create the YAML for an nginx pod that runs with the user ID 101. No need to create the pod
+
+<details>
+
+```
+cat <<EOF | kubectl apply -f - 
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: nginx
+  name: nginx
+spec:
+  securityContext: # insert this line
+    runAsUser: 101 # UID for the user
+  containers:
+  - image: nginx
+    imagePullPolicy: IfNotPresent
+    name: nginx
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Never
+EOF
+```
+```
+cat <<EOF | kubectl apply -f -
+apiVersion: v1
+kind: Pod
+metadata:
+  creationTimestamp: null
+  labels:
+    run: nginx
+  name: nginx
+spec:
+  containers:
+  - image: nginx
+    imagePullPolicy: IfNotPresent
+    name: nginx
+    securityContext: # insert this line
+      capabilities: # and this
+        add: ["NET_ADMIN", "SYS_TIME"] # this as well
+    resources: {}
+  dnsPolicy: ClusterFirst
+  restartPolicy: Never
+status: {}
+EOF
+```
+</details>
+
 
