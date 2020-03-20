@@ -33,8 +33,8 @@
 - [Task. Re-create certificates from CA certificate](#Task-Re-create-certificates-from-CA-certificate)
 - [Task. Update cluster](#Task-Update-cluster)
 - [Task. Rolling updates and rollbacks](#Task-Rolling-updates-and-rollbacks)
-<<<<<<< HEAD
 - [Task. Create hostPath Persistent Volume](#Task.-Create-hostPath-Persistent-Volume)
+- [Task. Expose pod without yaml](#Task-Expose-pod-without-yaml)
 - [Task. Create StorageClass,PersistentVolume,PersistentVolumeClaim via local](Task.-Create-StorageClass,PersistentVolume,PersistentVolumeClaim-via-local)
 - [Task. Expose Pod via Service](#Task-Expose-Pod-via-Service)
 - [Task. Deploy sidecar pod](#Task-Deploy-sidecar-pod)
@@ -43,15 +43,9 @@
 - [Task. Create nginx pod with environment value](#Task-Create-nginx-pod-with-environment-value)
 - [Task. Create Cronjob](#Task-Create-Cronjob)
 - [Task. Create pod with livenessProbe and readinessProbe](#Task-Create-pod-with-livenessProbe-and-readinessProbe)
-=======
-- [Task. Expose pod without yaml](#Task-Expose-pod-without-yaml)
-- [Task. Create hostPath Persistent Volume](Task.-Create-hostPath-Persistent-Volume)
-- [Task. Deploy sidecar pod](#Task-Deploy-sidecar-pod)
-- [Task. Name Resolution for Pod and Service](#Task-Name-Resolution-for-Pod-and-Service)
 - [Task. Create a configmap named config with values](#Task-Create-a-configmap-named-config-with-values])
 - [Task. Create initContainer](#Task-Create-initContainer)
-- [Task. Create Cronjob](#Task-Create-Cronjob)
->>>>>>> db7dfbdad9f77f4ed1420ae6031a6901ac2167ea
+- [Task. Create hostPath Persistent Volume](Task.-Create-hostPath-Persistent-Volume)
 - [Task. Create a configmap named config with values](#Task-Create-a-configmap-named-config-with-values)
 - [Task. Create an nginx pod with requests and limits](#Task-Create-an-nginx-pod-with-requests-and-limits)
 - [Task. Create an nginx deployment with NetworkPolicy](#Task-Create-an-nginx-deployment-with-NetworkPolicy)
@@ -139,19 +133,15 @@ kubectl uncordon wokrer1
 
 </details>
 
-<<<<<<< HEAD
-&nbsp;
 ## Task. Re-create certificates from CA certificate
-=======
+
 ## Task. Expose pod without yaml
 - pod - ```name```: ```nginx-pod```, image: ```nginx```
 - service - ```name```: ```nginx-svc```, ```type```: ```ClusterIP```
->>>>>>> db7dfbdad9f77f4ed1420ae6031a6901ac2167ea
 
 <details>
 
 ```
-<<<<<<< HEAD
 ```
 </details>
 
@@ -188,9 +178,10 @@ kubectl get deployment nginx -o yaml | grep image
 </details>
 
 &nbsp;
+
 ## Task. Create hostPath Persistent Volume
 
-=======
+```
 kubectl run nginx-pod --restart=Never --image=nginx
 ```
 
@@ -205,7 +196,7 @@ curl http://[ClusterIP]:80
 </details>
 
 ## Task. Create ```hostPath``` Persistent Volume
->>>>>>> db7dfbdad9f77f4ed1420ae6031a6901ac2167ea
+
 ### Create hostfile at ```/tmp/data/hostfile```
 
 <details>
@@ -257,8 +248,10 @@ kubectl delete pod testpod
 </details>
 
 &nbsp;
+
 ## Task. Create StorageClass,PersistentVolume,PersistentVolumeClaim via local
 ### Create StorageClass ```local-storage```
+
 <details>
 
 ```
@@ -378,6 +371,7 @@ cfssl gencert \
   admin-csr.json | cfssljson -bare admin
 ```
 </details>
+
 
 &nbsp;
 ## Task. Expose Pod via Service
@@ -706,11 +700,13 @@ EOF
 
 </details>
 
-<<<<<<< HEAD
 &nbsp;
+
 ## Task. Create nginx pod with environment value
-- ```VAL```=```val1```
-=======
+
+- ```name```: ```nginx-with-env1```
+- envirionment value: ```VAL=val1```
+
 ### nslookup
 
 <details>
@@ -727,18 +723,11 @@ kubectl exec -it dnsutils -- nslookup nginx-dns
 </details>
 
 ## Task. Create nginx pod with environment value
-- ```name```: ```nginx-with-env1```
-- envirionment value: ```VAL=val1```
->>>>>>> db7dfbdad9f77f4ed1420ae6031a6901ac2167ea
 
 <details>
 
 ```
-<<<<<<< HEAD
-kubectl run nginx --image=nginx --restart=Never --env="VAL1=val1"
-=======
 kubectl run nginx-with-env --restart=Never --env=VAL=val1 --image=nginx
->>>>>>> db7dfbdad9f77f4ed1420ae6031a6901ac2167ea
 ```
 </details>
 
@@ -752,21 +741,20 @@ kubectl run nginx-with-env --restart=Never --env=VAL=val1 --image=nginx
 <details>
 
 ```
-<<<<<<< HEAD
-kubectl run testcronjob --image=busybox --restart=OnFailure --schedule="*/1 * * * *" -- echo "Hello World!"
-=======
 kubectl run testcronjob --image=busybox --restart=OnFailure --schedule="*/3 * * * *" -- sh -c 'echo Hellow World!'
 ```
 ```
 kubectl exec -it nginx-with-env -- env
->>>>>>> db7dfbdad9f77f4ed1420ae6031a6901ac2167ea
 ```
 
 </details>
 
 &nbsp;
+
 ## Task. Create pod with livenessProbe and readinessProbe
+
 ### Create pod with livenessProbe
+
 <details>
 
 ```
@@ -800,7 +788,6 @@ EOF
 <details>
 
 ```
-<<<<<<< HEAD
 cat <<EOF | kubectl apply -f - 
 apiVersion: v1
 kind: Pod
@@ -824,27 +811,27 @@ spec:
       initialDelaySeconds: 5
       periodSeconds: 5
 EOF
-=======
-
->>>>>>> db7dfbdad9f77f4ed1420ae6031a6901ac2167ea
 ```
 </details>
 
 &nbsp;
 ## Task. Create a configmap named config with values
-<<<<<<< HEAD
+
 - ```foo=foofoo```
 - ```bar=barbar```
+- ```name```: ```testconfig``` 
+- value 1 - ```foo=foofoo```
+- value 2 - ```bar=barbar```
 
-### via command line
 <details>
 
 ```
 kubectl create configmap configmap1--from-literal="foo=foofoo" --from-literal="bar=barbar"
-=======
-- ```name```: ```testconfig``` 
-- value 1 - ```foo=foofoo```
-- value 2 - ```bar=barbar```
+```
+
+</details>
+
+### via command line
 
 <details>
 
@@ -858,7 +845,6 @@ data:
   foo: foofoo
   bar: barbar
 EOF
->>>>>>> db7dfbdad9f77f4ed1420ae6031a6901ac2167ea
 ```
 
 </details>
@@ -900,14 +886,9 @@ EOF
 
 &nbsp;
 ## Task. Create an nginx pod with requests and limits
-<<<<<<< HEAD
+- ```name```: ```testpod``` 
 - ```requests```: cpu=100m,memory=256Mi
 - ```limits```: cpu=200m,memory=512Mi
-=======
-- ```name```: ```testpod``` 
-- requests cpu=100m,memory=256Mi
-- limits cpu=200m,memory=512Mi
->>>>>>> db7dfbdad9f77f4ed1420ae6031a6901ac2167ea
 
 <details>
 
@@ -935,19 +916,13 @@ EOF
 
 </details>
 
-<<<<<<< HEAD
 &nbsp;
 ## Task. Create an nginx deployment with NetworkPolicy
-- 2 replicas
-- expose it via a ClusterIP service on port 80.
-- Create a NetworkPolicy so that only pods with labels ```access: true``` can access the deployment and apply it
-=======
-## Task. Create an nginx deployment with NetworkPolicy
+
 - ```name```: ```testpod``` 
 - 2 replicas
 - Expose it via a ClusterIP service on port 80.
-- Create a NetworkPolicy so that only pods with labels ```access: true``` can access the deployment
->>>>>>> db7dfbdad9f77f4ed1420ae6031a6901ac2167ea
+- Create a NetworkPolicy so that only pods with labels ```access: true``` can access the deployment and apply it
 
 <details>
 
@@ -1033,21 +1008,14 @@ EOF
 &nbsp;
 ## Task. Create a horizontal autoscaling group
 Create a horizontal autoscaling group that should start with 2 pods and scale when CPU usage is over 50%.
-<<<<<<< HEAD
 
 ### Create deployment ```nginx```
-<details>
-
-```
-kubectl run nginx --image=nginx --replicas=1
-=======
 - ```name```: ```test-autosclae```
 
 <details>
 
 ```
-
->>>>>>> db7dfbdad9f77f4ed1420ae6031a6901ac2167ea
+kubectl run nginx --image=nginx --replicas=1
 ```
 
 </details>
